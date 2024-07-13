@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ stock_name }}: {{ stock_price }}
+{% endblock %}
+
+{% block main %}
+    <p>Name - {{ stock_name}}</p>
+    <p>Price - {{ stock_price }}</p>
+{% endblock %}
