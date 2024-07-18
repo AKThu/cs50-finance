@@ -15,6 +15,9 @@ app = Flask(__name__)
 # Custom filter
 app.jinja_env.filters["usd"] = usd
 
+# Auto reload
+app.debug = True
+
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
@@ -36,8 +39,6 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
-    # return apology("implement", 404)
-
     """Show portfolio of stocks"""
 
     # Get current user id from session
@@ -354,9 +355,62 @@ def sell():
         return redirect("/")
     else:
         return render_template("sell-stock.html")
+    
+
+@app.route("/profile")
+def profile():
+    """Watch user profile"""
+
+    username = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])[0]["username"]
+
+    return render_template("profile.html", username=username)
 
 
-@app.route("/test", methods=["GET"])
+@app.route("/change-username", methods=["POST"])
+def change_username():
+    """Change username"""
+
+    # Get new username and confirm password from user input
+    new_username = request.form.get("newusername")
+    password = request.form.get("password")
+
+    # Get hashed password from the database
+    correct_password = db.execute("SELECT hash FROM users WHERE id = ?", session["user_id"])[0]["hash"]
+
+    # If confirmed password is not correct
+    if not check_password_hash(correct_password, password):
+        return apology("Incorrect password", 403)
+    
+    # Change username
+    db.execute("UPDATE users SET username = ? WHERE id = ?", new_username, session["user_id"])
+
+    # Redirect user to the homepage
+    return redirect("/")
+
+
+@app.route("/change-password", methods=["POST"])
+def change_password():
+    """Change password"""
+
+    # Get new password and confirm password from user input
+    new_password = request.form.get("newpassword")
+    current_password = request.form.get("currentpassword")
+
+    # Get hashed password from the database
+    correct_password = db.execute("SELECT hash FROM users WHERE id = ?", session["user_id"])[0]["hash"]
+
+    # If confirmed password is not correct
+    if not check_password_hash(correct_password, current_password):
+        return apology("Incorrect password", 403)
+    
+    # Change password
+    db.execute("UPDATE users SET hash = ? WHERE id = ?", generate_password_hash(new_password), session["user_id"])
+
+    # Redirect user to the homepage
+    return redirect("/")
+
+
+@app.route("/test")
 def test():
     # return {key: value for key, value in session.items()}
     return f"value is {db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])[0]["cash"]}"
