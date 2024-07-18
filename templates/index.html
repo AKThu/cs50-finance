@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Daskboard
+{% endblock %}
+
+{% block main %}
+<h3>{{ user["username"] }}</h3>
+<h4>Cash balance - {{ user["cash"] | usd}}</h4>
+<h4>Grand total - {{ grand_total | usd }}</h4>
+<h4 class="mt-5">Assets</h4>
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Share owned</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for asset in assets %}
+        <tr>
+            <th scope="col">{{ loop.index }}</th>
+            <td>{{ asset["stock"] }}</td>
+            <td>{{ asset["share_amount"] }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

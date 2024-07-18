@@ -4,6 +4,8 @@ from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime
+from pytz import utc
 
 from helpers import apology, login_required, lookup, usd
 
@@ -34,15 +36,102 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
+    # return apology("implement", 404)
+
     """Show portfolio of stocks"""
-    return apology("TODO")
+
+    # Get current user id from session
+    user_id = session["user_id"]
+    # Get current username and cash as a Dictionary
+    user = db.execute("SELECT username, cash FROM users WHERE id = ?", user_id)[0]
+
+    # Get stock name and share amount owned by user as a List of Dictionaries
+    assets = db.execute("SELECT DISTINCT stock, SUM(share_amount) as share_amount FROM transactions WHERE user_id = ? GROUP BY stock HAVING SUM(share_amount) != 0 ORDER BY stock", user_id)
+
+    # Grand total of user's cash balance and stocks' total value
+    grand_total = user["cash"]
+    for asset in assets:
+        stock = lookup(asset["stock"])
+        grand_total += asset["share_amount"] * stock["price"]
+
+    return render_template("index.html", user=user, assets=assets, grand_total=grand_total)
 
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
     """Buy shares of stock"""
-    return apology("TODO")
+
+    # User reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+        
+        # Getting stock symbol posted by user
+        symbol = request.form.get("symbol").strip()
+
+        # If user does not provided stock name
+        if not symbol:
+            return apology("Must provide the name of stock!", 403)
+        
+        try:
+            # Getting amount of shares to buy posted by user
+            shares = request.form.get("shares").strip()
+
+            # If user does not provided the amount of shares
+            if not shares:
+                return apology("Must provide share amount!", 403)
+            shares = float(shares)
+        except ValueError:
+            return apology("Enter only numeric value in share amount!", 403)
+        else:
+            # If user provided negative number of shares
+            if shares != abs(shares):
+                return apology("Must provide with a valid number of share amount!", 403)
+
+        # Get the current value of the stock
+        stock = lookup(symbol)
+
+        # If there is no stock that the user is requesting
+        if not stock:
+            return apology("Stock does not exists", 404)
+
+        # Get current user id
+        user_id = session["user_id"]
+
+        # Get user's available money and total cost to buy stocks
+        available_money = float(db.execute("SELECT cash FROM users WHERE id = ?", user_id)[0]["cash"])
+        cost = stock["price"] * shares
+        # If user's money is insufficient to buy shares
+        if available_money < cost:
+            return apology("Insufficient cash!", 403)
+        
+        # Get current UTC time
+        current_utc_time = utc.localize(datetime.now()).replace(microsecond=0, tzinfo=None)
+        
+        # Add the purchase history into the database
+        db.execute( """
+                    INSERT INTO transactions (user_id, stock, price, share_amount, datetime)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    user_id,
+                    stock["symbol"],
+                    stock["price"],
+                    shares,
+                    current_utc_time
+                    )
+        
+        # Subtract cost from the user's cash balance
+        db.execute("""
+                   UPDATE users
+                   SET cash = ?
+                   WHERE id = ?
+                   """, available_money - cost, user_id)
+        
+        # Redirect user back to the home page
+        return redirect("/")
+
+    # User reached route via GET (as by clicking a link or via redirect)
+    else:
+        return render_template("buy-stock.html")
 
 
 @app.route("/history")
@@ -109,16 +198,21 @@ def quote():
 
     # User reached route via POST (as by submitting a form via post)
     if request.method == "POST":
+        symbol = request.form.get("symbol")
+
+        # If user does not provided a stock name
+        if not symbol:
+            return apology("Must provide the name of stock!", 403)
+
         # Get the price and symbol of the stock
-        stock = lookup(request.form.get("symbol"))
-        stock_name = stock["symbol"]
-        stock_price = usd(stock["price"])
+        stock = lookup(symbol)
+
         # If the stock is not found
         if not stock:
-            return apology("Stock not found", 403)
+            return apology("Stock not found", 404)
         
-        # Redirect user to the stock detail page
-        return render_template("quoted.html", stock_name=stock_name, stock_price=stock_price)
+        # Show the stock details page
+        return render_template("quoted.html", stock_name=stock["symbol"], stock_price=stock["price"])
 
     # User reached route via GET (as by clicking a link)
     else:
@@ -175,12 +269,86 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock"""
-    return apology("TODO")
+
+    if request.method == "POST":
+        
+        # Getting stock symbol posted by user
+        symbol = request.form.get("symbol").strip()
+
+        # If user does not provided stock name
+        if not symbol:
+            return apology("Must provide the name of stock!", 403)
+        
+        try:
+            # Getting amount of shares to buy posted by user
+            shares = request.form.get("shares").strip()
+
+            # If user does not provided the amount of shares
+            if not shares:
+                return apology("Must provide share amount!", 403)
+            
+            shares = float(shares)
+        except ValueError:
+            return apology("Enter only numeric value in share amount!", 403)
+        else:
+            # If user provided negative number of shares
+            if shares != abs(shares):
+                return apology("Must provide with a valid number of share amount!", 403)
+
+        # Get the current value of the stock
+        stock = lookup(symbol)
+
+        # If there is no stock that the user is requesting
+        if not stock:
+            return apology("Stock does not exists", 404)
+
+        # Get current user id
+        user_id = session["user_id"]
+
+        # Get the name of all stocks owned by the user
+        own_stocks_dict = db.execute("SELECT DISTINCT stock FROM transactions WHERE user_id = ? GROUP BY stock HAVING SUM(share_amount) != 0 ORDER BY stock", user_id)
+        own_stocks = []
+        for own_stock_dict in own_stocks_dict:
+            own_stocks.append(own_stock_dict["stock"])
+        
+        # If user does not own the stock
+        if not stock["symbol"] in own_stocks:
+            return apology("Does not own any shares of the stock!", 403)
+
+        # Get user's available stock share
+        available_share = float(db.execute("SELECT SUM(share_amount) AS share_amount FROM transactions WHERE user_id = ? AND stock = ?", user_id, stock["symbol"])[0]["share_amount"])
+        # If user's available stock shares to sell is insufficient
+        if available_share < shares:
+            return apology("Insufficient share!", 403)
+        
+        # Get current UTC time
+        current_utc_time = utc.localize(datetime.now()).replace(microsecond=0, tzinfo=None)
+        
+        # Add the purchase history into the database
+        db.execute( """
+                    INSERT INTO transactions (user_id, stock, price, share_amount, datetime)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    user_id,
+                    stock["symbol"],
+                    stock["price"],
+                    -shares,
+                    current_utc_time
+                    )
+        
+        # Add received cash from selling to the user's cash balance
+        db.execute("""
+                   UPDATE users
+                   SET cash = ?
+                   WHERE id = ?
+                   """, shares * stock["price"], user_id)
+
+        return redirect("/")
+    else:
+        return render_template("sell-stock.html")
 
 
 @app.route("/test", methods=["GET"])
 def test():
-    if db.execute("SELECT * FROM users WHERE username = ?", request.args.get("name")):
-        return "Hit"
-    else:
-        return "Miss"
+    # return {key: value for key, value in session.items()}
+    return f"value is {db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])[0]["cash"]}"

@@ -6,5 +6,5 @@
 
 {% block main %}
     <p>Name - {{ stock_name}}</p>
-    <p>Price - {{ stock_price }}</p>
+    <p>Price - {{ stock_price | usd }}</p>
 {% endblock %}
