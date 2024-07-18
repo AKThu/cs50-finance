@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Transaction history
+{% endblock %}
+
+{% block main %}
+<h3>Transaction History</h3>
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Stock</th>
+            <th scope="col">Buy/Sell</th>
+            <th scope="col">Price</th>
+            <th scope="col">Share amount</th>
+            <th scope="col">Date & time</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for transaction in transactions %}
+        <tr>
+            <th scope="col">{{ loop.index }}</th>
+            <td>{{ transaction["stock"] }}</td>
+            <td>{{ transaction["transaction_type"] }}</td>
+            <td>{{ transaction["price"] }}</td>
+            <td>{{ transaction["share_amount"] }}</td>
+            <td>{{ transaction["datetime"] }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -109,10 +109,11 @@ def buy():
         
         # Add the purchase history into the database
         db.execute( """
-                    INSERT INTO transactions (user_id, stock, price, share_amount, datetime)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO transactions (user_id, transaction_type, stock, price, share_amount, datetime)
+                    VALUES (?, ?, ?, ?, ?, ?)
                     """,
                     user_id,
+                    'buy',
                     stock["symbol"],
                     stock["price"],
                     shares,
@@ -138,7 +139,10 @@ def buy():
 @login_required
 def history():
     """Show history of transactions"""
-    return apology("TODO")
+
+    transactions = db.execute("SELECT stock, transaction_type, price, share_amount, datetime FROM transactions WHERE user_id = ? ORDER BY id DESC", session["user_id"])
+
+    return render_template("history.html", transactions=transactions)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -323,13 +327,17 @@ def sell():
         
         # Get current UTC time
         current_utc_time = utc.localize(datetime.now()).replace(microsecond=0, tzinfo=None)
+
+        # Get user's current owned cash
+        owned_cash = db.execute("SELECT cash FROM users WHERE id = ?", user_id)[0]["cash"]
         
         # Add the purchase history into the database
         db.execute( """
-                    INSERT INTO transactions (user_id, stock, price, share_amount, datetime)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO transactions (user_id, transaction_type, stock, price, share_amount, datetime)
+                    VALUES (?, ?, ?, ?, ?, ?)
                     """,
                     user_id,
+                    'sell',
                     stock["symbol"],
                     stock["price"],
                     -shares,
@@ -341,7 +349,7 @@ def sell():
                    UPDATE users
                    SET cash = ?
                    WHERE id = ?
-                   """, shares * stock["price"], user_id)
+                   """, owned_cash + (shares * stock["price"]), user_id)
 
         return redirect("/")
     else:
