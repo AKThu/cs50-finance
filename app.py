@@ -133,7 +133,7 @@ def buy():
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
-        return render_template("buy-stock.html")
+        return render_template("buy.html", stock=request.args.get("stock"))
 
 
 @app.route("/history")
@@ -228,7 +228,7 @@ def quote():
 def register():
     """Register user"""
 
-    # If user is submitting the register form
+    # User reached route via POST (as by submitting a form)
     if request.method == "POST":
         # Remove any space at the start and end of username, password and confirm password
         username = request.form.get("username").strip()
@@ -265,7 +265,7 @@ def register():
             except ValueError:
                 return apology("User already exists!", 403)
 
-    # Go to the register form
+    # User reached route via GET (as by clicking a link)
     else:
         return render_template("register.html")
 
@@ -275,6 +275,7 @@ def register():
 def sell():
     """Sell shares of stock"""
 
+    # User reached route via POST (as by submitting a form)
     if request.method == "POST":
         
         # Getting stock symbol posted by user
@@ -287,11 +288,9 @@ def sell():
         try:
             # Getting amount of shares to buy posted by user
             shares = request.form.get("shares").strip()
-
             # If user does not provided the amount of shares
             if not shares:
-                return apology("Must provide share amount!", 403)
-            
+                return apology("Must provide share amount!", 403)   
             shares = float(shares)
         except ValueError:
             return apology("Enter only numeric value in share amount!", 403)
@@ -309,7 +308,6 @@ def sell():
 
         # Get current user id
         user_id = session["user_id"]
-
         # Get the name of all stocks owned by the user
         own_stocks_dict = db.execute("SELECT DISTINCT stock FROM transactions WHERE user_id = ? GROUP BY stock HAVING SUM(share_amount) != 0 ORDER BY stock", user_id)
         own_stocks = []
@@ -353,11 +351,14 @@ def sell():
                    """, owned_cash + (shares * stock["price"]), user_id)
 
         return redirect("/")
+    
+    # User reached route via GET (as by clicking a link)
     else:
-        return render_template("sell-stock.html")
+        return render_template("sell.html", stock=request.args.get("stock"))
     
 
 @app.route("/profile")
+@login_required
 def profile():
     """Watch user profile"""
 
@@ -367,6 +368,7 @@ def profile():
 
 
 @app.route("/change-username", methods=["POST"])
+@login_required
 def change_username():
     """Change username"""
 
@@ -389,6 +391,7 @@ def change_username():
 
 
 @app.route("/change-password", methods=["POST"])
+@login_required
 def change_password():
     """Change password"""
 
@@ -408,6 +411,86 @@ def change_password():
 
     # Redirect user to the homepage
     return redirect("/")
+
+
+@app.route("/deposit", methods=["GET", "POST"])
+@login_required
+def deposit():
+    """Deposit cash"""
+
+    # User reached route via POST (as by clicking a link)
+    if request.method == "POST":
+
+        # Check if user input is valid
+        try:
+            # Getting amount of money to deposit from user input
+            deposit_amount = request.form.get("amount").strip()
+            # If user does not provided the deposit amount
+            if not deposit_amount:
+                return apology("Must provide deposit amount!", 403)
+            deposit_amount = float(deposit_amount)
+        except ValueError:
+            return apology("Enter only numeric value!", 403)
+        else:
+            # If user provided a negative number
+            if deposit_amount != abs(deposit_amount):
+                return apology("Must provide a valid amount!", 403)
+        
+        # Get currently own cash
+        cash = db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])[0]["cash"]
+
+        # Add money to user account
+        total_cash = cash + deposit_amount
+        db.execute("UPDATE users SET cash = ? WHERE id = ?", total_cash, session["user_id"])
+        
+        # Redirect user to the homepage
+        return redirect("/")
+    
+    # User reached route via GET (as by clicking a link) 
+    else:
+        return render_template("deposit.html")
+
+
+@app.route("/withdraw", methods=["GET", "POST"])
+@login_required
+def withdraw():
+    """Withdraw cash"""
+
+    # User reached route via POST (as by clicking a link)
+    if request.method == "POST":
+
+        # Check if user input is valid
+        try:
+            # Getting amount of money to withdraw from user input
+            withdraw_amount = request.form.get("amount").strip()
+            # If user does not provided the withdraw amount
+            if not withdraw_amount:
+                return apology("Must provide withdraw amount!", 403)
+            withdraw_amount = float(withdraw_amount)
+        except ValueError:
+            return apology("Enter only numeric value!", 403)
+        else:
+            # If user provided a negative number
+            if withdraw_amount != abs(withdraw_amount):
+                return apology("Must provide a valid amount!", 403)
+        
+        # Get currently own cash
+        cash = db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])[0]["cash"]
+
+        # Check if balance is lower than the withdraw amount
+        if cash < withdraw_amount:
+            return apology("Not enough balance!", 403)
+
+        # Deduct money from user account
+        total_cash = cash - withdraw_amount
+        db.execute("UPDATE users SET cash = ? WHERE id = ?", total_cash, session["user_id"])
+        
+        # Redirect user to the homepage
+        return redirect("/")
+    
+    # User reached route via GET (as by clicking a link) 
+    else:
+        return render_template("withdraw.html")
 
 
 @app.route("/test")

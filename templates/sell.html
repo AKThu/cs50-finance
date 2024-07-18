@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Buy stock
+{% endblock %}
+
+{% block main %}
+<h3>Sell stock</h3>
+<form action="/sell" method="post">
+    <input type="text" autocomplete="off" autofocus name="symbol" placeholder="Stock Name eg.NFLX" class="my-2" value="{{ stock if stock }}"><br>
+    <input type="number" step="0.01" autocomplete="off" name="shares" placeholder="sell amount" class="my-2"><br>
+    <button type="submit" class="mt-2">Sell</button>
+</form>
+{% endblock %}

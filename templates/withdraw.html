@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Withdraw
+{% endblock %}
+
+{% block main %}
+<h3>Withdraw cash</h3>
+<form action="/withdraw" method="post">
+    <input type="number" step="0.01" autocomplete="off" autofocus placeholder="Withdraw amount" name="amount" class="my-2"><br>
+    <button type="submit" class="mt-2">Withdraw</button>
+</form>
+{% endblock %}

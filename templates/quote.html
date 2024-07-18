@@ -1,12 +1,13 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Search stock
+Search stock
 {% endblock %}
 
 {% block main %}
-    <form action="/quote" method="post">
-        <input type="text" autocomplete="off" autofocus name="symbol" placeholder="Stock Name eg.NFLX">
-        <button type="submit">Search</button>
-    </form>
+<h3>Search for stock</h3>
+<form action="/quote" method="post">
+    <input type="text" autocomplete="off" autofocus name="symbol" placeholder="Stock Name eg.NFLX" class="my-2"><br>
+    <button type="submit" class="mt-2">Search</button>
+</form>
 {% endblock %}

@@ -15,6 +15,7 @@ Daskboard
             <th scope="col">#</th>
             <th scope="col">Name</th>
             <th scope="col">Share owned</th>
+            <th scope="col"></th>
         </tr>
     </thead>
     <tbody>
@@ -23,6 +24,10 @@ Daskboard
             <th scope="col">{{ loop.index }}</th>
             <td>{{ asset["stock"] }}</td>
             <td>{{ asset["share_amount"] }}</td>
+            <td>
+                <a class="btn btn-primary" href="/buy?stock={{ asset['stock'] }}">Buy</a>
+                <a class="btn btn-danger" href="/sell?stock={{ asset['stock'] }}">Sell</a>
+            </td>
         </tr>
     {% endfor %}
     </tbody>
