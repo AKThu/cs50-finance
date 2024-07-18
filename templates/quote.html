@@ -5,9 +5,9 @@ Search stock
 {% endblock %}
 
 {% block main %}
-<h3>Search for stock</h3>
+<h3 class="mb-4">Search for stock</h3>
 <form action="/quote" method="post">
-    <input type="text" autocomplete="off" autofocus name="symbol" placeholder="Stock Name eg.NFLX" class="my-2"><br>
-    <button type="submit" class="mt-2">Search</button>
+    <input type="text" autocomplete="off" autofocus name="symbol" placeholder="Stock Name eg.NFLX" class="form-control mx-auto w-auto"><br>
+    <button type="submit" class="btn btn-primary">Search</button>
 </form>
 {% endblock %}

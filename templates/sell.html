@@ -5,10 +5,15 @@ Buy stock
 {% endblock %}
 
 {% block main %}
-<h3>Sell stock</h3>
+<h3 class="mb-4">Sell stock</h3>
 <form action="/sell" method="post">
-    <input type="text" autocomplete="off" autofocus name="symbol" placeholder="Stock Name eg.NFLX" class="my-2" value="{{ stock if stock }}"><br>
-    <input type="number" step="0.01" autocomplete="off" name="shares" placeholder="sell amount" class="my-2"><br>
-    <button type="submit" class="mt-2">Sell</button>
+    <select name="symbol" class="form-select mx-auto w-auto">
+        <option selected>Select stock</option>
+        {% for stock in stocks %}
+        <option value="{{ stock['stock'] }}">{{ stock['stock'] }}</option>
+        {% endfor %}
+    </select><br>
+    <input type="text" autocomplete="off" name="shares" placeholder="sell amount" class="form-control mx-auto w-auto"><br>
+    <button class="btn btn-primary" type="submit" class="mt-2">Sell</button>
 </form>
 {% endblock %}

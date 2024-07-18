@@ -47,7 +47,7 @@ def index():
     user = db.execute("SELECT username, cash FROM users WHERE id = ?", user_id)[0]
 
     # Get stock name and share amount owned by user as a List of Dictionaries
-    assets = db.execute("SELECT DISTINCT stock, SUM(share_amount) as share_amount FROM transactions WHERE user_id = ? GROUP BY stock HAVING SUM(share_amount) != 0 ORDER BY stock", user_id)
+    assets = db.execute("SELECT DISTINCT stock, ROUND(SUM(share_amount), 2) as share_amount FROM transactions WHERE user_id = ? GROUP BY stock HAVING SUM(share_amount) != 0 ORDER BY stock", user_id)
 
     # Grand total of user's cash balance and stocks' total value
     grand_total = user["cash"]
@@ -80,7 +80,12 @@ def buy():
             # If user does not provided the amount of shares
             if not shares:
                 return apology("Must provide share amount!", 403)
-            shares = float(shares)
+            
+            # If user provided a decimal number
+            if int(shares) != float(shares):
+                return apology("Enter integer values only!", 403)
+            
+            shares = int(shares)
         except ValueError:
             return apology("Enter only numeric value in share amount!", 403)
         else:
@@ -133,7 +138,7 @@ def buy():
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
-        return render_template("buy.html", stock=request.args.get("stock"))
+        return render_template("buy.html")
 
 
 @app.route("/history")
@@ -291,7 +296,12 @@ def sell():
             # If user does not provided the amount of shares
             if not shares:
                 return apology("Must provide share amount!", 403)   
-            shares = float(shares)
+            
+            # If user provided a decimal number
+            if int(shares) != float(shares):
+                return apology("Enter integer values only!", 403)
+            
+            shares = int(shares)
         except ValueError:
             return apology("Enter only numeric value in share amount!", 403)
         else:
@@ -354,7 +364,9 @@ def sell():
     
     # User reached route via GET (as by clicking a link)
     else:
-        return render_template("sell.html", stock=request.args.get("stock"))
+        # Get the name of stocks owned by the user
+        stocks = db.execute("SELECT DISTINCT stock FROM transactions WHERE user_id = ?", session["user_id"])
+        return render_template("sell.html", stocks=stocks)
     
 
 @app.route("/profile")
@@ -428,7 +440,12 @@ def deposit():
             # If user does not provided the deposit amount
             if not deposit_amount:
                 return apology("Must provide deposit amount!", 403)
-            deposit_amount = float(deposit_amount)
+            
+            # If user provided a decimal number
+            if int(deposit_amount) != float(deposit_amount):
+                return apology("Enter integer values only!", 403)
+            
+            deposit_amount = int(deposit_amount)
         except ValueError:
             return apology("Enter only numeric value!", 403)
         else:
@@ -466,7 +483,12 @@ def withdraw():
             # If user does not provided the withdraw amount
             if not withdraw_amount:
                 return apology("Must provide withdraw amount!", 403)
-            withdraw_amount = float(withdraw_amount)
+            
+            # If user provided a decimal number
+            if int(withdraw_amount) != float(withdraw_amount):
+                return apology("Enter integer values only!", 403)
+            
+            withdraw_amount = int(withdraw_amount)
         except ValueError:
             return apology("Enter only numeric value!", 403)
         else:
