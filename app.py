@@ -51,8 +51,10 @@ def index():
 
     # Grand total of user's cash balance and stocks' total value
     grand_total = user["cash"]
-    for asset in assets:
+    stock_prices = []
+    for key, asset in enumerate(assets):
         stock = lookup(asset["stock"])
+        assets[key]["current_price"] = stock["price"]
         grand_total += asset["share_amount"] * stock["price"]
 
     return render_template("index.html", user=user, assets=assets, grand_total=grand_total)

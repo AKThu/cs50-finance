@@ -12,21 +12,21 @@ User profile
         <p>{{ username }}</p>
     </div>
     <hr>
-    <div>
-        <h5>Change Username</h5>
+    <div class="py-3">
+        <h5 class="mb-4">Change Username</h5>
         <form action="/change-username" method="post">
-            <input type="text" autocomplete="off" placeholder="New username" name="newusername" class="my-1"><br>
-            <input type="password" autocomplete="off" placeholder="Current Password" name="password" class="my-1"><br>
-            <button type="submit" class="btn btn-primary mt-2">Confirm</button>
+            <input type="text" autocomplete="off" placeholder="New username" name="newusername" class="form-control me-auto w-auto"><br>
+            <input type="password" autocomplete="off" placeholder="Current Password" name="password" class="form-control me-auto w-auto"><br>
+            <button type="submit" class="btn btn-primary">Confirm</button>
         </form>
     </div>
     <hr>
-    <div>
-        <h5>Change Password</h5>
+    <div class="py-3">
+        <h5 class="mb-4">Change Password</h5>
         <form action="/change-password" method="post">
-            <input type="password" autocomplete="off" placeholder="New Password" name="newpassword" class="my-1"><br>
-            <input type="password" autocomplete="off" placeholder="Current Password" name="currentpassword" class="my-1"><br>
-            <button type="submit" class="btn btn-primary mt-2">Confirm</button>
+            <input type="password" autocomplete="off" placeholder="New Password" name="newpassword" class="form-control me-auto w-auto"><br>
+            <input type="password" autocomplete="off" placeholder="Current Password" name="currentpassword" class="form-control me-auto w-auto"><br>
+            <button type="submit" class="btn btn-primary">Confirm</button>
         </form>
     </div>
 </div>

@@ -5,26 +5,39 @@ Daskboard
 {% endblock %}
 
 {% block main %}
-<h3 class="mb-4">{{ user["username"] }}</h3>
-<h4>Cash balance - {{ user["cash"] | usd}}</h4>
-<h4>Grand total - {{ grand_total | usd }}</h4>
-<h4 class="mt-5">Assets</h4>
+<h4 class="mb-4">Assets</h4>
 <table class="table table-striped">
     <thead>
         <tr>
-            <th scope="col">#</th>
-            <th scope="col">Name</th>
-            <th scope="col">Share owned</th>
+            <th scope="col">Symbol</th>
+            <th scope="col">Shares</th>
+            <th scope="col">Price</th>
+            <th scope="col">Total</th>
         </tr>
     </thead>
     <tbody>
     {% for asset in assets %}
         <tr>
-            <th scope="col">{{ loop.index }}</th>
             <td>{{ asset["stock"] }}</td>
-            <td>{{ asset["share_amount"]  }}</td>
+            <td>{{ asset["share_amount"] }}</td>
+            <td>{{ asset["current_price"] | usd }}</td>
+            <td>{{ (asset["share_amount"] * asset["current_price"]) | usd }}</td>
         </tr>
     {% endfor %}
+        <tr>
+            <td></td>
+            <td></td>
+            <td>Cash</td>
+            <td>{{ user["cash"] | usd }}</td>
+        </tr>
     </tbody>
+    <tfoot>
+        <tr>
+            <td></td>
+            <td></td>
+            <td class="fw-bold">Total</td>
+            <td class="fw-bold">{{ grand_total | usd }}</td>
+        </tr>
+    </tfoot>
 </table>
 {% endblock %}
